@@ -17,7 +17,12 @@ export type AvatarCardProps = {
 };
 
 function initialsFromName(name: string) {
-  const parts = name.trim().split(/\s+/).slice(0, 2);
+  const TITLES = /^(dr|prof|mr|mrs|ms|miss|sir)\.?$/i;
+  const parts = name
+    .trim()
+    .split(/\s+/)
+    .filter((p) => !TITLES.test(p)) // skip honorifics like "Dr."
+    .slice(0, 2);
   return parts.map((p) => p[0]?.toUpperCase() ?? "").join("");
 }
 

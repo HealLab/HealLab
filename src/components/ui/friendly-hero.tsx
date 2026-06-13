@@ -14,7 +14,7 @@ type TitleImage = {
 
 export function FriendlyHero({
   title = "Hello And Welcome",
-  subtitle = "The Knowledge-infused Nursing Oriented Training 🪢 Lab",
+  subtitle = "Health, Education, and AI 🫶 Lab",
   primary = { label: "Contact Us", href: "#" },
   secondary = { label: "Our Work", href: "#" },
   className = "",

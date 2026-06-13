@@ -8,7 +8,7 @@ export default defineConfig({
     react(),
     tailwindcss(),
   ],
-  base: '/KnotLab/',
+  base: '/HealLab/',
   resolve: {
     alias: {
       '@': path.resolve(__dirname, 'src'),
