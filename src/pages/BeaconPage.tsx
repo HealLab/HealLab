@@ -64,7 +64,7 @@ export function BeaconPage() {
               BEACON
             </h1>
             <p className="mt-3 max-w-2xl text-xl font-medium text-foreground/80">
-              Building Wearable & Mobile Edge Intelligence for Community Health
+              Building Edge AI on Wearable and Mobile Devices for Community Health
             </p>
             <p className="mt-6 max-w-2xl text-lg leading-relaxed text-muted-foreground">
               BEACON provides a shared WearOS and Android edge-AI platform that a
