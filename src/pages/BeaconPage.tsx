@@ -6,7 +6,6 @@ import {
 import { SiteHeader } from "@/components/ui/site-header";
 import { SiteFooter } from "@/components/ui/site-footer";
 import { BeaconBackdrop } from "@/components/ui/beacon-backdrop";
-import { StatCard } from "@/components/ui/stat-card";
 import { AvatarCard } from "@/components/ui/avatar-card";
 import { Button } from "@/components/ui/button";
 
@@ -28,12 +27,6 @@ const EXAMPLES = [
   },
 ];
 
-const STATS = [
-  { value: "50+", label: "students across 5+ partner institutions" },
-  { value: "3+", label: "open example edge-AI models" },
-  { value: "100%", label: "teams complete a responsible-AI review" },
-  { value: "2–4", label: "student papers, posters, or demos" },
-];
 
 const TEAM = [
   {
@@ -45,8 +38,10 @@ const TEAM = [
   },
   {
     name: "Dr. Wenbin Luo",
+    href: "https://www.stmarytx.edu/academics/faculty/wenbin-luo/",
     subtitle:
-      "Co-PI · Engineering faculty, St. Mary's University. IEEE Senior Member and Student Branch advisor; embedded & computer engineering.",
+      "Co-PI · Professor, St. Mary's University. IEEE Senior Member and Student Branch advisor; embedded & computer engineering.",
+    external: true,
   },
   {
     name: "Dr. Eduardo Davalos",
@@ -150,25 +145,6 @@ export function BeaconPage() {
                   </div>
                 );
               })}
-            </div>
-          </div>
-        </section>
-
-        {/* Impact */}
-        <section className="border-t border-border/60 py-20 sm:py-24">
-          <div className="container mx-auto max-w-5xl px-4">
-            <div className="mx-auto max-w-2xl text-center">
-              <h2 className="font-display text-3xl font-semibold tracking-tight sm:text-4xl">
-                Expected impact
-              </h2>
-              <p className="mt-4 text-lg leading-relaxed text-muted-foreground">
-                Top goals we will measure across the program.
-              </p>
-            </div>
-            <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-              {STATS.map((s) => (
-                <StatCard key={s.label} value={s.value} label={s.label} />
-              ))}
             </div>
           </div>
         </section>

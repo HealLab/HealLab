@@ -70,15 +70,16 @@ export function AvatarCard({
 
   const currentSrc = showHover ? hoverImageSrc : imageSrc;
 
-  return (
-    <div
-      className={clsx(
-        "group relative overflow-hidden rounded-xl border bg-card text-card-foreground shadow-sm",
-        "transition hover:shadow-md focus-within:shadow-md",
-        className
-      )}
-    >
-      <div className="flex items-start gap-4 p-4 sm:p-5">
+  const cardClass = clsx(
+    "group relative block overflow-hidden rounded-xl border bg-card text-card-foreground shadow-sm transition",
+    hasLink
+      ? "cursor-pointer hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/60 focus-visible:ring-offset-2"
+      : "hover:shadow-md focus-within:shadow-md",
+    className
+  );
+
+  const content = (
+    <div className="flex items-start gap-4 p-4 sm:p-5">
         {/* Avatar (only this area triggers the swap) */}
         <div className="shrink-0">
           {currentSrc && !baseError ? (
@@ -124,17 +125,7 @@ export function AvatarCard({
         {/* Text */}
         <div className="min-w-0">
           <h3 className="text-base font-semibold leading-tight tracking-tight">
-            {hasLink ? (
-              <a
-                href={href}
-                {...linkProps}
-                className="focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/60 focus-visible:ring-offset-2 rounded-sm hover:underline"
-              >
-                {name}
-              </a>
-            ) : (
-              <span className="rounded-sm">{name}</span>
-            )}
+            <span className="rounded-sm">{name}</span>
           </h3>
           {subtitle && (
             <p className="mt-0.5 text-sm text-muted-foreground">{subtitle}</p>
@@ -146,8 +137,17 @@ export function AvatarCard({
           )}
         </div>
       </div>
-    </div>
   );
+
+  if (hasLink) {
+    return (
+      <a href={href} {...linkProps} className={cardClass}>
+        {content}
+      </a>
+    );
+  }
+
+  return <div className={cardClass}>{content}</div>;
 }
 
 export default AvatarCard;
