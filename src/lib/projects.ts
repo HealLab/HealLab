@@ -55,24 +55,3 @@ export const PROJECTS: Project[] = [
     status: "tba",
   },
 ];
-
-export const TEAM = [
-  {
-    name: "Dr. Yike Zhang",
-    href: "https://yikezhang.me",
-    subtitle: "Director (PI) · Human-centered AI, medical imaging, human-in-the-loop systems",
-    imageSrc: `${import.meta.env.BASE_URL}profiles/yike_zhang.jpeg`,
-    external: true,
-  },
-  {
-    name: "Dr. Eduardo Davalos",
-    href: "https://edavalosanaya.github.io",
-    subtitle: "Collaborator (Co-PI) · AI in education, HCI, human-AI collaboration",
-    imageSrc: `${import.meta.env.BASE_URL}profiles/eduardo_davalos.webp`,
-    external: true,
-  },
-  {
-    name: "Dr. Wenbin Luo",
-    subtitle: "Collaborator (Co-PI) · Embedded & computer engineering, IEEE Senior Member",
-  },
-];

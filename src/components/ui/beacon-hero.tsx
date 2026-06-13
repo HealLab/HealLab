@@ -1,5 +1,4 @@
 import { Link } from "react-router-dom";
-import { ArrowRight } from "lucide-react";
 import { Button } from "./button";
 import { BeaconBackdrop } from "./beacon-backdrop";
 
@@ -29,7 +28,6 @@ export function BeaconHero() {
           <Button asChild size="lg" className="h-12 rounded-xl px-7 text-base">
             <Link to="/projects/beacon">
               Explore BEACON
-              <ArrowRight className="h-4 w-4" />
             </Link>
           </Button>
           <Button
