@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Button } from "./button";
 import { BeaconBackdrop } from "./beacon-backdrop";
+import { Typewriter } from "./typewriter";
 
 export function BeaconHero() {
   return (
@@ -29,12 +30,18 @@ export function BeaconHero() {
             simulation to wearable devices.
           </p>
 
-          <p className="mx-auto mt-5 max-w-xl text-base text-foreground/80 md:mx-0">
-            <span className="font-semibold text-foreground">
-              Now building: BEACON,
-            </span>{" "}
-            as an edge-AI platform in wearable and mobile devices for community
-            health.
+          <p className="mx-auto mt-5 min-h-[3.5rem] max-w-xl text-base text-foreground/80 md:mx-0">
+            <Typewriter
+              segments={[
+                {
+                  text: "Now building: BEACON,",
+                  className: "font-semibold text-foreground",
+                },
+                {
+                  text: " as an edge-AI platform in wearable and mobile devices for community health.",
+                },
+              ]}
+            />
           </p>
 
           <div className="pointer-events-auto mt-9 flex flex-col justify-center gap-3 sm:flex-row md:justify-start">

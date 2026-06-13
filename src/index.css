@@ -174,3 +174,12 @@ Anthropic-inspired warm + professional palette (ivory ground, clay-coral accent,
     text-wrap: balance;
   }
 }
+
+/* Typewriter caret */
+@keyframes caret-blink {
+  0%, 50% { opacity: 1; }
+  50.01%, 100% { opacity: 0; }
+}
+.animate-caret {
+  animation: caret-blink 1.05s steps(1, end) infinite;
+}
