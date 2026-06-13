@@ -5,7 +5,7 @@ import { BeaconBackdrop } from "./beacon-backdrop";
 export function BeaconHero() {
   return (
     <section className="relative isolate flex h-full items-center overflow-hidden">
-      <BeaconBackdrop tint={false} />
+      {/* <BeaconBackdrop tint={false} /> */}
 
       {/* Foreground content (transparent to pointer so the 3D parallax stays alive) */}
       <div className="pointer-events-none container mx-auto max-w-5xl px-6 py-24 text-center">
@@ -25,7 +25,7 @@ export function BeaconHero() {
         </p>
 
         <div className="pointer-events-auto mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
-          <Button asChild size="lg" className="h-12 rounded-xl px-7 text-base">
+          <Button asChild size="lg" className="h-12 min-w-[12rem] rounded-xl px-7 text-base">
             <Link to="/projects/beacon">
               Explore BEACON
             </Link>
@@ -34,7 +34,7 @@ export function BeaconHero() {
             asChild
             size="lg"
             variant="outline"
-            className="h-12 rounded-xl px-7 text-base"
+            className="h-12 min-w-[12rem] rounded-xl px-7 text-base"
           >
             <a href="mailto:yzhang5@stmarytx.edu">Contact Us</a>
           </Button>

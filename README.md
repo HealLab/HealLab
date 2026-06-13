@@ -1,2 +1,2 @@
-# KnotLab
-The Knowledge-infused Nursing Oriented Training (KNOT) Lab
+# HealLab
+The Health, Education, and AI Lab

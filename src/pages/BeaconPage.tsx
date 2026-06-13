@@ -65,7 +65,7 @@ export function BeaconPage() {
       <main>
         {/* Banner */}
         <section className="relative isolate overflow-hidden">
-          <BeaconBackdrop tint={false} />
+          {/* <BeaconBackdrop tint={false} /> */}
           <div className="container mx-auto max-w-5xl px-6 py-24 sm:py-28">
             <h1 className="max-w-3xl font-display text-4xl font-semibold leading-[1.08] tracking-tight text-balance sm:text-6xl">
               BEACON
