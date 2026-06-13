@@ -46,7 +46,7 @@ export function BeaconHero() {
 
           <div className="pointer-events-auto mt-9 flex flex-col justify-center gap-3 sm:flex-row md:justify-start">
             <Button asChild size="lg" className="h-12 min-w-[12rem] rounded-xl px-7 text-base">
-              <Link to="/projects/beacon">Explore BEACON</Link>
+              <Link to="/beacon">Explore BEACON</Link>
             </Button>
             <Button
               asChild

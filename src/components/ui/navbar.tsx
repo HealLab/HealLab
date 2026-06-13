@@ -10,8 +10,8 @@ import { Sheet, SheetContent, SheetTrigger } from "./sheet";
 import { Button } from "./button";
 
 const NAV_LINKS = [
-  { to: "/projects/beacon", label: "BEACON" },
-  { to: "/projects/knot", label: "KNOT" },
+  { to: "/beacon", label: "BEACON" },
+  { to: "/knot", label: "KNOT" },
 ] as const;
 
 export function DesktopNav() {

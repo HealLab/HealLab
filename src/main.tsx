@@ -9,7 +9,6 @@ import {
 } from "react-router-dom";
 
 import { HomePage } from "./pages/HomePage";
-import { ProjectsPage } from "./pages/ProjectsPage";
 import { BeaconPage } from "./pages/BeaconPage";
 import { KnotPage } from "./pages/KnotPage";
 
@@ -38,9 +37,8 @@ const router = createBrowserRouter(
       element: <RootLayout />,
       children: [
         { path: "/", element: <HomePage /> },
-        { path: "/projects", element: <ProjectsPage /> },
-        { path: "/projects/beacon", element: <BeaconPage /> },
-        { path: "/projects/knot", element: <KnotPage /> },
+        { path: "/beacon", element: <BeaconPage /> },
+        { path: "/knot", element: <KnotPage /> },
         { path: "*", element: <HomePage /> },
       ],
     },
