@@ -5,7 +5,7 @@ import { BeaconBackdrop } from "./beacon-backdrop";
 export function BeaconHero() {
   return (
     <section className="relative isolate flex h-full items-center overflow-hidden">
-      {/* <BeaconBackdrop tint={false} /> */}
+      <BeaconBackdrop tint={false} />
 
       {/* Foreground content (transparent to pointer so the 3D parallax stays alive) */}
       <div className="pointer-events-none container mx-auto max-w-5xl px-6 py-24 text-center">
