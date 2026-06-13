@@ -12,12 +12,12 @@ export function BeaconHero() {
         <BeaconBackdrop tint={false} />
         <div
           aria-hidden="true"
-          className="absolute inset-0 bg-gradient-to-r from-background via-background/85 to-background/40 md:via-background/40 md:to-transparent"
+          className="pointer-events-none absolute inset-0 bg-gradient-to-r from-background via-background/85 to-background/40 md:via-background/40 md:to-transparent"
         />
       </div>
 
       {/* Text (transparent to pointer so the 3D parallax stays alive) */}
-      <div className="pointer-events-none relative z-10 mx-auto flex h-full max-w-7xl items-center px-6 lg:px-10">
+      <div className="pointer-events-none relative z-10 mx-auto flex h-full max-w-[86rem] items-center px-6 lg:px-12">
         <div className="max-w-2xl text-center md:text-left">
           <h1 className="font-display text-3xl font-semibold leading-[1.05] tracking-tight sm:whitespace-nowrap sm:text-5xl">
             Health, Education, and AI

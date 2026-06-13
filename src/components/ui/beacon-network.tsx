@@ -1,205 +1,222 @@
 import * as THREE from "three";
-import { useMemo, useRef } from "react";
+import { useMemo, useRef, type RefObject } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 
-const ACCENT = "#c2683f"; // clay-coral brand
+const ACCENT_LOW = "#8a4a30"; // deep coral (troughs)
+const ACCENT_HIGH = "#e8975f"; // bright coral (peaks)
+const R = 4.2; // disk radius
+const COLS = 180; // grid resolution per axis
+const MAX_RIPPLES = 16;
+const CYCLE = 1.1; // seconds per heartbeat cycle (~55 bpm resting)
+const DUB_DELAY = 0.3; // gap between "lub" and "dub"
+const TAU = 0.22; // pulse upswing time constant
+const BEACON_AMP = 0.6; // amplitude of a heartbeat ripple
+const CURSOR_AMP = 0.16; // amplitude of a cursor ripple (small + local)
 
-/** Soft round sprite so points read as glowing nodes. */
-function makeCircleTexture() {
-  const size = 64;
-  const canvas = document.createElement("canvas");
-  canvas.width = canvas.height = size;
-  const ctx = canvas.getContext("2d")!;
-  const g = ctx.createRadialGradient(
-    size / 2,
-    size / 2,
-    0,
-    size / 2,
-    size / 2,
-    size / 2
+const alpha = (x: number) => (x > 0 ? Math.E * x * Math.exp(-x) : 0);
+
+const vertexShader = /* glsl */ `
+  uniform float uTime;
+  uniform float uPixelRatio;
+  uniform vec2 uBeaconPos[2];
+  uniform float uBeaconPulse[2];
+  uniform vec2 uRippleOrigin[${MAX_RIPPLES}];
+  uniform float uRippleTime[${MAX_RIPPLES}];
+  uniform float uRippleAmp[${MAX_RIPPLES}];
+  varying float vHeight;
+
+  float ripples(vec2 p) {
+    float h = 0.0;
+    for (int i = 0; i < ${MAX_RIPPLES}; i++) {
+      float st = uRippleTime[i];
+      float age = uTime - st;
+      if (age < 0.0 || age > 5.0) continue;
+      float dist = distance(p, uRippleOrigin[i]);
+      float front = age * 1.4;            // wavefront speed
+      float g = exp(-pow((dist - front) / 0.45, 2.0));
+      float ageDecay = exp(-age * 0.5);
+      float distDecay = 1.0 / (1.0 + dist * 0.28);
+      h += g * ageDecay * distDecay * uRippleAmp[i];
+    }
+    return h;
+  }
+
+  void main() {
+    vec2 p = vec2(position.x, position.z);
+    float distC = length(p);
+
+    // gentle ambient morph
+    float amb = (sin(p.x * 0.55 + uTime * 0.38) + cos(p.y * 0.55 + uTime * 0.3)) * 0.06;
+
+    // two beacons: soft, rounded domes that pulse (lub-dub)
+    float beacon = 0.0;
+    for (int i = 0; i < 2; i++) {
+      float dd = distance(p, uBeaconPos[i]);
+      beacon += exp(-pow(dd / 0.85, 2.0)) * (0.02 + uBeaconPulse[i] * 0.14);
+    }
+
+    float h = amb + beacon + ripples(p);
+
+    // soft circular falloff at the disk edge
+    float edge = smoothstep(4.2, 3.6, distC);
+    h *= edge;
+
+    vec3 pos = vec3(position.x, h, position.z);
+    vHeight = h;
+
+    vec4 mv = modelViewMatrix * vec4(pos, 1.0);
+    gl_Position = projectionMatrix * mv;
+    gl_PointSize = uPixelRatio * (2.0 + h * 3.2) * (6.0 / -mv.z) * edge;
+  }
+`;
+
+const fragmentShader = /* glsl */ `
+  precision mediump float;
+  uniform vec3 uColorLow;
+  uniform vec3 uColorHigh;
+  varying float vHeight;
+
+  void main() {
+    vec2 c = gl_PointCoord - 0.5;
+    float d = length(c);
+    if (d > 0.5) discard;
+    float alpha = smoothstep(0.5, 0.08, d);
+    float hN = clamp(vHeight * 1.1, 0.0, 1.0);
+    vec3 col = mix(uColorLow, uColorHigh, hN);
+    gl_FragColor = vec4(col, alpha * (0.55 + hN * 0.45));
+  }
+`;
+
+function RippleField({ clickRef }: { clickRef: RefObject<boolean> }) {
+  const cycleStart = useRef(0);
+  const firedLub = useRef(false);
+  const firedDub = useRef(false);
+  const lastCursor = useRef(0);
+  const head = useRef(0);
+  const prevPointer = useRef({ x: 999, y: 999 });
+  const plane = useMemo(() => new THREE.Plane(new THREE.Vector3(0, 1, 0), 0), []);
+  const hit = useMemo(() => new THREE.Vector3(), []);
+
+  // second beacon at a random spot on the disk (chosen once)
+  const beaconB = useMemo(() => {
+    const ang = Math.random() * Math.PI * 2;
+    const rad = 1.6 + Math.random() * 1.4;
+    return new THREE.Vector2(Math.cos(ang) * rad, Math.sin(ang) * rad);
+  }, []);
+
+  const positions = useMemo(() => {
+    const step = (R * 2) / COLS;
+    const pts: number[] = [];
+    for (let i = 0; i <= COLS; i++) {
+      for (let j = 0; j <= COLS; j++) {
+        const x = -R + i * step;
+        const z = -R + j * step;
+        if (Math.hypot(x, z) <= R) pts.push(x, 0, z);
+      }
+    }
+    return new Float32Array(pts);
+  }, []);
+
+  const uniforms = useMemo(
+    () => ({
+      uTime: { value: 0 },
+      uPixelRatio: { value: Math.min(window.devicePixelRatio, 2) },
+      uBeaconPos: { value: [new THREE.Vector2(0, 0), beaconB.clone()] },
+      uBeaconPulse: { value: [0, 0] },
+      uRippleOrigin: {
+        value: Array.from({ length: MAX_RIPPLES }, () => new THREE.Vector2(0, 0)),
+      },
+      uRippleTime: { value: Array.from({ length: MAX_RIPPLES }, () => -100) },
+      uRippleAmp: { value: Array.from({ length: MAX_RIPPLES }, () => 0) },
+      uColorLow: { value: new THREE.Color(ACCENT_LOW) },
+      uColorHigh: { value: new THREE.Color(ACCENT_HIGH) },
+    }),
+    [beaconB]
   );
-  g.addColorStop(0, "rgba(255,255,255,1)");
-  g.addColorStop(0.35, "rgba(255,255,255,0.85)");
-  g.addColorStop(1, "rgba(255,255,255,0)");
-  ctx.fillStyle = g;
-  ctx.fillRect(0, 0, size, size);
-  const tex = new THREE.CanvasTexture(canvas);
-  tex.needsUpdate = true;
-  return tex;
-}
 
-function PulsingBeacon({
-  position,
-  phase,
-}: {
-  position: [number, number, number];
-  phase: number;
-}) {
-  const ref = useRef<THREE.Mesh>(null);
-  const mat = useRef<THREE.MeshStandardMaterial>(null);
+  const addRipple = (t: number, x: number, z: number, amp: number) => {
+    const i = head.current % MAX_RIPPLES;
+    uniforms.uRippleOrigin.value[i].set(x, z);
+    uniforms.uRippleTime.value[i] = t;
+    uniforms.uRippleAmp.value[i] = amp;
+    head.current++;
+  };
+
   useFrame((state) => {
     const t = state.clock.elapsedTime;
-    const pulse = 0.5 + 0.5 * Math.sin(t * 1.6 + phase);
-    if (ref.current) {
-      const s = 0.9 + pulse * 0.5;
-      ref.current.scale.setScalar(s);
+    uniforms.uTime.value = t;
+
+    // heartbeat cycle
+    if (t - cycleStart.current >= CYCLE) {
+      cycleStart.current = t;
+      firedLub.current = false;
+      firedDub.current = false;
     }
-    if (mat.current) {
-      mat.current.emissiveIntensity = 1.2 + pulse * 2.2;
+    const cs = cycleStart.current;
+    if (!firedLub.current) {
+      addRipple(t, 0, 0, BEACON_AMP); // "lub" from the central beacon
+      firedLub.current = true;
     }
-  });
-  return (
-    <mesh ref={ref} position={position}>
-      <sphereGeometry args={[0.12, 16, 16]} />
-      <meshStandardMaterial
-        ref={mat}
-        color={ACCENT}
-        emissive={ACCENT}
-        emissiveIntensity={2}
-        toneMapped={false}
-      />
-    </mesh>
-  );
-}
-
-function Network() {
-  const group = useRef<THREE.Group>(null);
-  const pointsMat = useRef<THREE.PointsMaterial>(null);
-  const tex = useMemo(makeCircleTexture, []);
-
-  const { nodes, lines, beacons } = useMemo(() => {
-    const N = 56;
-    const R = 3.4;
-    const verts: THREE.Vector3[] = [];
-    for (let i = 0; i < N; i++) {
-      // random point in a sphere (rejection-free via cube root radius)
-      const u = Math.random();
-      const v = Math.random();
-      const theta = u * Math.PI * 2;
-      const phi = Math.acos(2 * v - 1);
-      const r = R * Math.cbrt(Math.random());
-      verts.push(
-        new THREE.Vector3(
-          r * Math.sin(phi) * Math.cos(theta),
-          r * Math.sin(phi) * Math.sin(theta) * 0.7, // flatten slightly
-          r * Math.cos(phi)
-        )
-      );
+    if (!firedDub.current && t - cs >= DUB_DELAY) {
+      addRipple(t, beaconB.x, beaconB.y, BEACON_AMP * 0.8); // "dub" from the 2nd
+      firedDub.current = true;
     }
+    uniforms.uBeaconPulse.value[0] = alpha((t - cs) / TAU);
+    uniforms.uBeaconPulse.value[1] = alpha((t - cs - DUB_DELAY) / TAU);
 
-    const nodePos = new Float32Array(N * 3);
-    verts.forEach((p, i) => {
-      nodePos[i * 3] = p.x;
-      nodePos[i * 3 + 1] = p.y;
-      nodePos[i * 3 + 2] = p.z;
-    });
+    // cursor ripples: only on actual movement or a click
+    const moved =
+      Math.hypot(
+        state.pointer.x - prevPointer.current.x,
+        state.pointer.y - prevPointer.current.y
+      ) > 0.004;
+    prevPointer.current.x = state.pointer.x;
+    prevPointer.current.y = state.pointer.y;
 
-    // connect nearby nodes
-    const seg: number[] = [];
-    const threshold = 1.55;
-    for (let i = 0; i < N; i++) {
-      let count = 0;
-      for (let j = i + 1; j < N && count < 3; j++) {
-        if (verts[i].distanceTo(verts[j]) < threshold) {
-          seg.push(
-            verts[i].x,
-            verts[i].y,
-            verts[i].z,
-            verts[j].x,
-            verts[j].y,
-            verts[j].z
-          );
-          count++;
+    const clicked = clickRef.current;
+    clickRef.current = false;
+
+    if (moved || clicked) {
+      state.raycaster.setFromCamera(state.pointer, state.camera);
+      if (state.raycaster.ray.intersectPlane(plane, hit)) {
+        const within = Math.hypot(hit.x, hit.z) < R;
+        if (within && (clicked || t - lastCursor.current > 0.09)) {
+          addRipple(t, hit.x, hit.z, CURSOR_AMP);
+          lastCursor.current = t;
         }
       }
     }
-
-    // pick a handful of nodes to be bright pulsing beacons
-    const beaconList = verts
-      .filter((_, i) => i % 11 === 0)
-      .slice(0, 5)
-      .map((p, i) => ({
-        position: [p.x, p.y, p.z] as [number, number, number],
-        phase: i * 1.3,
-      }));
-
-    return {
-      nodes: nodePos,
-      lines: new Float32Array(seg),
-      beacons: beaconList,
-    };
-  }, []);
-
-  useFrame((state, delta) => {
-    if (!group.current) return;
-    group.current.rotation.y += delta * 0.05;
-    const { x, y } = state.pointer;
-    group.current.rotation.x = THREE.MathUtils.lerp(
-      group.current.rotation.x,
-      y * 0.22,
-      0.04
-    );
-    group.current.position.x = THREE.MathUtils.lerp(
-      group.current.position.x,
-      x * 0.5,
-      0.04
-    );
-    if (pointsMat.current) {
-      pointsMat.current.size =
-        0.16 + Math.sin(state.clock.elapsedTime * 2) * 0.02;
-    }
   });
 
   return (
-    <group ref={group}>
-      <points>
-        <bufferGeometry>
-          <bufferAttribute attach="attributes-position" args={[nodes, 3]} />
-        </bufferGeometry>
-        <pointsMaterial
-          ref={pointsMat}
-          map={tex}
-          color={ACCENT}
-          size={0.16}
-          sizeAttenuation
-          transparent
-          opacity={0.9}
-          depthWrite={false}
-          blending={THREE.AdditiveBlending}
-        />
-      </points>
-
-      <lineSegments>
-        <bufferGeometry>
-          <bufferAttribute attach="attributes-position" args={[lines, 3]} />
-        </bufferGeometry>
-        <lineBasicMaterial
-          color={ACCENT}
-          transparent
-          opacity={0.16}
-          depthWrite={false}
-          blending={THREE.AdditiveBlending}
-        />
-      </lineSegments>
-
-      {beacons.map((b, i) => (
-        <PulsingBeacon key={i} position={b.position} phase={b.phase} />
-      ))}
-    </group>
+    <points frustumCulled={false}>
+      <bufferGeometry>
+        <bufferAttribute attach="attributes-position" args={[positions, 3]} />
+      </bufferGeometry>
+      <shaderMaterial
+        uniforms={uniforms}
+        vertexShader={vertexShader}
+        fragmentShader={fragmentShader}
+        transparent
+        depthWrite={false}
+      />
+    </points>
   );
 }
 
 export default function BeaconNetwork() {
+  const clickRef = useRef(false);
   return (
     <Canvas
       dpr={[1, 2]}
-      camera={{ position: [0, 0, 7.5], fov: 50 }}
+      camera={{ position: [0, 1.7, 6.3], fov: 50 }}
       gl={{ antialias: true, alpha: true }}
-      style={{ position: "absolute", inset: 0 }}
+      style={{ position: "absolute", inset: 0, pointerEvents: "auto" }}
+      onPointerDown={() => {
+        clickRef.current = true;
+      }}
     >
-      <ambientLight intensity={0.7} />
-      <pointLight position={[6, 6, 8]} intensity={60} color={ACCENT} />
-      <Network />
+      <RippleField clickRef={clickRef} />
     </Canvas>
   );
 }

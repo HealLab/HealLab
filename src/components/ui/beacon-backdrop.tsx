@@ -24,7 +24,7 @@ export function BeaconBackdrop({
   useEffect(() => setMounted(true), []);
 
   return (
-    <div className={cn("absolute inset-0 -z-10", className)}>
+    <div className={cn("pointer-events-none absolute inset-0 -z-10", className)}>
       <div
         aria-hidden="true"
         className="absolute inset-0"
